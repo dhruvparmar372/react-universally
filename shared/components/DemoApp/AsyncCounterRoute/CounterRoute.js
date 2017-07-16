@@ -10,6 +10,7 @@ class CounterRoute extends Component {
 
   incrementCounter() {
     this.setState({ counter: this.state.counter + 1 });
+    console.log('incrementing counter');
   }
 
   render() {
