@@ -13,7 +13,10 @@ import serialize from 'serialize-javascript';
 import config from '../../../config';
 import ifElse from '../../../shared/utils/logic/ifElse';
 import removeNil from '../../../shared/utils/arrays/removeNil';
-import getClientBundleEntryAssets from './getClientBundleEntryAssets';
+import {
+  getClientBundleEntryAssets,
+  getClientWebpackManifest,
+} from './getClientBundleEntryAssets';
 
 import ClientConfig from '../../../config/components/ClientConfig';
 import HTML from '../../../shared/components/HTML';
@@ -26,6 +29,11 @@ function KeyedComponent({ children }) {
 
 // Resolve the assets (js/css) for the client bundle's entry chunk.
 const clientEntryAssets = getClientBundleEntryAssets();
+
+// Resolve the webpack manifest. Useful only in production mode.
+const clientWebpackManifest = process.env.BUILD_FLAG_IS_DEV === 'false' ?
+  getClientWebpackManifest() : {};
+
 
 function stylesheetTag(stylesheetFilePath) {
   return (
@@ -46,6 +54,10 @@ function ServerHTML(props) {
   const inlineScript = body =>
     <script nonce={nonce} type="text/javascript" dangerouslySetInnerHTML={{ __html: body }} />;
 
+  const webpackManifestScript = `
+    window.webpackManifest = ${JSON.stringify(clientWebpackManifest)};
+  `;
+
   const headerElements = removeNil([
     ...ifElse(helmet)(() => helmet.meta.toComponent(), []),
     ...ifElse(helmet)(() => helmet.title.toComponent(), []),
@@ -53,6 +65,7 @@ function ServerHTML(props) {
     ...ifElse(helmet)(() => helmet.link.toComponent(), []),
     ifElse(clientEntryAssets && clientEntryAssets.css)(() => stylesheetTag(clientEntryAssets.css)),
     ...ifElse(helmet)(() => helmet.style.toComponent(), []),
+    ifElse(process.env.BUILD_FLAG_IS_DEV === 'false')(() => inlineScript(webpackManifestScript)),
   ]);
 
   const bodyElements = removeNil([

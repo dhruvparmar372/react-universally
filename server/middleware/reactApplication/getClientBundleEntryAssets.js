@@ -7,7 +7,21 @@ import { resolve as pathResolve } from 'path';
 import appRootDir from 'app-root-dir';
 import config from '../../../config';
 
-let resultCache;
+function getJSONFromFile(fileName) {
+  const filePath = pathResolve(
+    appRootDir.get(),
+    config('bundles.client.outputPath'),
+    `./${fileName}`,
+  );
+
+  if (!fs.existsSync(filePath)) {
+    throw new Error(
+      `We could not find the "${filePath}" file. Please ensure that the client bundle has been built.`,
+    );
+  }
+
+  return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+}
 
 /**
  * Retrieves the js/css for the named chunks that belong to our client bundle.
@@ -22,7 +36,9 @@ let resultCache;
  *     to the render logic.  Having this method allows us to easily fetch
  *     the respective assets simply by using a chunk name. :)
  */
-export default function getClientBundleEntryAssets() {
+export function getClientBundleEntryAssets() {
+  let resultCache;
+
   // Return the assets json cache if it exists.
   // In development mode we always read the assets json file from disk to avoid
   // any cases where an older version gets cached.
@@ -30,23 +46,23 @@ export default function getClientBundleEntryAssets() {
     return resultCache;
   }
 
-  const assetsFilePath = pathResolve(
-    appRootDir.get(),
-    config('bundles.client.outputPath'),
-    `./${config('bundleAssetsFileName')}`,
-  );
+  const clientBundleAssetsJSON = getJSONFromFile(config('bundleAssetsFileName'));
 
-  if (!fs.existsSync(assetsFilePath)) {
-    throw new Error(
-      `We could not find the "${assetsFilePath}" file, which contains a list of the assets of the client bundle.  Please ensure that the client bundle has been built.`,
-    );
-  }
-
-  const readAssetsJSONFile = () => JSON.parse(fs.readFileSync(assetsFilePath, 'utf8'));
-  const assetsJSONCache = readAssetsJSONFile();
-  if (typeof assetsJSONCache.index === 'undefined') {
+  if (typeof clientBundleAssetsJSON.index === 'undefined') {
     throw new Error('No asset data found for expected "index" entry chunk of client bundle.');
   }
-  resultCache = assetsJSONCache.index;
+
+  resultCache = clientBundleAssetsJSON.index;
+  return resultCache;
+}
+
+export function getClientWebpackManifest() {
+  let resultCache;
+
+  if (resultCache) {
+    return resultCache;
+  }
+
+  resultCache = getJSONFromFile(config('bundleManifestFileName'));
   return resultCache;
 }

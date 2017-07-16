@@ -5,6 +5,7 @@ import nodeExternals from 'webpack-node-externals';
 import path from 'path';
 import webpack from 'webpack';
 import WebpackMd5Hash from 'webpack-md5-hash';
+import ChunkManifestWebpackPlugin from 'chunk-manifest-webpack-plugin';
 
 import { happyPackPlugin, log } from '../utils';
 import { ifElse } from '../../shared/utils/logic';
@@ -232,6 +233,17 @@ export default function webpackConfigFactory(buildOptions) {
       // cases where browsers end up having to download all the client chunks
       // even though 1 or 2 may have only changed.
       ifClient(() => new WebpackMd5Hash()),
+
+      // Since chunk-manifest-webpack-plugin doesn't work with webpack-dev-server
+      // https://github.com/soundcloud/chunk-manifest-webpack-plugin/issues/26
+      // we generate manifest only in production mode.
+      // Also this optimisation is to prevent better long term caching of
+      // index chunk which can be compromised in development mode.
+      ifProdClient(() => new ChunkManifestWebpackPlugin({
+        filename: config('bundleManifestFileName'),
+        manifestVariable: 'webpackManifest',
+        inlineManifest: false,
+      })),
 
       // These are process.env flags that you can use in your code in order to
       // have advanced control over what is included/excluded in your bundles.
