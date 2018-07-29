@@ -98,7 +98,7 @@
     "babel-template": "6.26.0",
     "chokidar": "1.7.0",
     "css-loader": "0.28.7",
-    "chunk-manifest-webpack-plugin": "1.1.0",
+    "chunk-manifest-webpack-plugin": "1.1.2",
     "enzyme": "2.9.1",
     "enzyme-to-json": "2.0.0",
     "eslint": "4.7.2",
