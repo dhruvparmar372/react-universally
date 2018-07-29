@@ -5,7 +5,7 @@ import nodeExternals from 'webpack-node-externals';
 import path from 'path';
 import webpack from 'webpack';
 import WebpackMd5Hash from 'webpack-md5-hash';
-import ChunkManifestWebpackPlugin from 'chunk-manifest-webpack-plugin';
+import InlineChunkManifestWebpackPlugin from 'inline-chunk-manifest-html-webpack-plugin';
 
 import { happyPackPlugin, log } from '../utils';
 import { ifElse } from '../../shared/utils/logic';
@@ -239,11 +239,13 @@ export default function webpackConfigFactory(buildOptions) {
       // we generate manifest only in production mode.
       // Also this optimisation is to prevent better long term caching of
       // index chunk which can be compromised in development mode.
-      ifProdClient(() => new ChunkManifestWebpackPlugin({
-        filename: config('bundleManifestFileName'),
-        manifestVariable: 'webpackManifest',
-        inlineManifest: false,
-      })),
+      ifProdClient(
+        () =>
+          new InlineChunkManifestWebpackPlugin({
+            filename: config('bundleManifestFileName'),
+            manifestVariable: 'webpackManifest',
+          }),
+      ),
 
       // These are process.env flags that you can use in your code in order to
       // have advanced control over what is included/excluded in your bundles.
